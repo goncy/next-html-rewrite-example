@@ -5,7 +5,7 @@ interface Props {
 }
 
 const aws = {
-  get: async (bucket: string) => `http://localhost:3000/buckets/${bucket}.html`
+  get: async (bucket: string) => `https://next-html-rewrite-example.vercel.app/buckets/${bucket}.html`
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {

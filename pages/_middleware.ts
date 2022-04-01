@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 const upstash = {
   get: async (domain: string) => {
     const map: Record<string, string> = {
-      'http://localhost:3000': 'bercel'
+      'http://localhost:3000': 'bercel',
+      'https://next-html-rewrite-example.vercel.app': 'bercel'
     }
 
     return map[domain]
