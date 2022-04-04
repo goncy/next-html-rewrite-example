@@ -18,6 +18,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
   const __HTML = await aws.get(params!.website as string);
 
+  // If there's no HTML for the website it'll render the 404 page instead
   return !__HTML ? { notFound: true } : { props: { __HTML } };
 };
 
