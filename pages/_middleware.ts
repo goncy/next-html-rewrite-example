@@ -13,7 +13,8 @@ function rewriteTo404(url: URL) {
 export default async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
-  // Skip public files
+  // Skip public files, for the purposes of the example it might not
+  // be needed to check for it
   if (PUBLIC_FILE.test(url.pathname)) return;
 
   // Allow the revalidation API to be used
