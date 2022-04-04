@@ -1,26 +1,24 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
+import { upstash, aws } from '../lib/db';
 
 interface Props {
   __HTML: string;
 }
 
-const aws = {
-  get: async (bucket: string) =>
-    `https://next-html-rewrite-example.vercel.app/buckets/${bucket}.html`,
-};
-
 export const getStaticPaths: GetStaticPaths = async () => {
+  const websites = await upstash.getAll();
+
   return {
-    paths: [],
+    // pre-generate the known websites at build time
+    paths: Object.keys(websites).map((website) => ({ params: { website } })),
     fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
-  const file = await aws.get(params!.bucket as string);
-  const __HTML = await fetch(file).then((res) => res.text());
+  const __HTML = await aws.get(params!.website as string);
 
-  return { props: { __HTML } };
+  return !__HTML ? { notFound: true } : { props: { __HTML } };
 };
 
 const Noop = () => null;
