@@ -1,24 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { upstash } from '../lib/db';
 
-const upstash = {
-  get: async (domain: string) => {
-    const map: Record<string, string> = {
-      'http://localhost:3000': 'bercel',
-      'https://next-html-rewrite-example.vercel.app': 'bercel'
-    }
+// RegExp for public files
+const PUBLIC_FILE = /\.(.*)$/;
 
-    return map[domain]
-  }
+function rewriteTo404(url: URL) {
+  // Point to a 404 path to render the 404 page
+  url.pathname = '/404/404';
+  return NextResponse.rewrite(url);
 }
 
 export default async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
-  if (url.pathname !== "/") return NextResponse.next()
+  // Skip public files, for the purposes of the example it might not
+  // be needed to check for it
+  if (PUBLIC_FILE.test(url.pathname)) return;
 
-  const bucket = await upstash.get(url.origin)
+  // Allow the revalidation API to be used
+  if (url.pathname === '/api/revalidate') return;
 
-  url.pathname = bucket ? `/_bucket/${bucket}` : `/404`
+  // After callling /api/revalidate, it will make a call to /localhost?secret=...
+  // and in that case we want to continue without rewriting
+  if (url.searchParams.get('secret') === process.env.REVALIDATE_SECRET) {
+    url.searchParams.delete('secret');
+    return;
+  }
+
+  // For the example, only `/` allows content and any other path is a 404.
+  // Removing this check allows other paths to go the same website
+  if (url.pathname !== '/') return rewriteTo404(url);
+
+  const website = await upstash.get(url.origin);
+
+  // Similar check to the one in `pages/[website].tsx`, but running at the edge
+  if (!website) return rewriteTo404(url);
+
+  url.pathname = website ? `/${website}` : `/404`;
 
   return NextResponse.rewrite(url);
 }
